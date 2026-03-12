@@ -427,6 +427,16 @@
             border-top: 1px solid var(--border-color);
         }
 
+        .last-updated a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .last-updated a:hover {
+            opacity: 0.8;
+        }
+
         @media (max-width: 768px) {
             .current-weather {
                 grid-template-columns: 1fr;
@@ -552,7 +562,11 @@
         </div>
 
         <div class="last-updated">
-            Last updated: <span id="lastUpdate">--</span>
+            Last updated: <span id="lastUpdate">--</span><br>
+            <span style="font-size: 11px; color: var(--text-secondary); margin-top: 8px; display: block;">
+                Weather data provided by <a href="https://open-meteo.com" target="_blank" style="color: var(--accent); text-decoration: none;">Open-Meteo</a> • 
+                Radar data by <a href="https://www.windy.com" target="_blank" style="color: var(--accent); text-decoration: none;">Windy</a>
+            </span>
         </div>
     </div>
 
