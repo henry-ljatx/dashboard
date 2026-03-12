@@ -672,15 +672,28 @@
             const container = document.getElementById('forecastGrid');
             container.innerHTML = '';
 
-            const daysToShow = Math.min(10, daily.time.length);
+            // Start from today (skip yesterday if it's in the data)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            let startIndex = 0;
+            const firstDate = new Date(daily.time[0]);
+            firstDate.setHours(0, 0, 0, 0);
+            
+            if (firstDate < today) {
+                startIndex = 1; // Skip yesterday
+            }
+
+            const daysToShow = Math.min(10, daily.time.length - startIndex);
             for (let i = 0; i < daysToShow; i++) {
-                const date = new Date(daily.time[i]);
+                const idx = startIndex + i;
+                const date = new Date(daily.time[idx]);
                 const dayName = date.toLocaleDateString('en-US', {weekday: 'short'});
                 const dateStr = date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
-                const high = Math.round(daily.temperature_2m_max[i]);
-                const low = Math.round(daily.temperature_2m_min[i]);
-                const code = daily.weather_code[i];
-                const precip = daily.precipitation_probability_max[i] || 0;
+                const high = Math.round(daily.temperature_2m_max[idx]);
+                const low = Math.round(daily.temperature_2m_min[idx]);
+                const code = daily.weather_code[idx];
+                const precip = daily.precipitation_probability_max[idx] || 0;
 
                 const div = document.createElement('div');
                 div.className = 'forecast-card';
@@ -772,25 +785,34 @@
 
             const daily = weatherData.daily;
             const hourly = weatherData.hourly;
-            const date = new Date(daily.time[dayIndex]);
+            
+            // Find the correct day accounting for offset
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const firstDate = new Date(daily.time[0]);
+            firstDate.setHours(0, 0, 0, 0);
+            const startIndex = firstDate < today ? 1 : 0;
+            const actualDayIndex = startIndex + dayIndex;
+            
+            const date = new Date(daily.time[actualDayIndex]);
             const dayName = date.toLocaleDateString('en-US', {weekday: 'long'});
             const dateStr = date.toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'});
             
-            const high = Math.round(daily.temperature_2m_max[dayIndex]);
-            const low = Math.round(daily.temperature_2m_min[dayIndex]);
-            const code = daily.weather_code[dayIndex];
-            const precip = daily.precipitation_probability_max[dayIndex] || 0;
-            const wind = Math.round(daily.wind_speed_10m_max[dayIndex]);
-            const uvIndex = Math.round(daily.uv_index_max[dayIndex]);
-            const sunrise = new Date(daily.sunrise[dayIndex]).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
-            const sunset = new Date(daily.sunset[dayIndex]).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+            const high = Math.round(daily.temperature_2m_max[actualDayIndex]);
+            const low = Math.round(daily.temperature_2m_min[actualDayIndex]);
+            const code = daily.weather_code[actualDayIndex];
+            const precip = daily.precipitation_probability_max[actualDayIndex] || 0;
+            const wind = Math.round(daily.wind_speed_10m_max[actualDayIndex]);
+            const uvIndex = Math.round(daily.uv_index_max[actualDayIndex]);
+            const sunrise = new Date(daily.sunrise[actualDayIndex]).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+            const sunset = new Date(daily.sunset[actualDayIndex]).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
 
-            // Calculate rain timing from hourly data
+            // Calculate rain timing from hourly data (show MAX per period, not average)
             const dayStart = new Date(date).setHours(0, 0, 0, 0);
             const dayEnd = new Date(date).setHours(23, 59, 59, 999);
-            const morningRain = getRainProbabilityForPeriod(hourly, dayStart, dayEnd, 6, 12); // 6am-12pm
-            const afternoonRain = getRainProbabilityForPeriod(hourly, dayStart, dayEnd, 12, 18); // 12pm-6pm
-            const eveningRain = getRainProbabilityForPeriod(hourly, dayStart, dayEnd, 18, 24); // 6pm-12am
+            const morningRain = getMaxRainForPeriod(hourly, dayStart, dayEnd, 6, 12); // 6am-12pm
+            const afternoonRain = getMaxRainForPeriod(hourly, dayStart, dayEnd, 12, 18); // 12pm-6pm
+            const eveningRain = getMaxRainForPeriod(hourly, dayStart, dayEnd, 18, 24); // 6pm-12am
 
             const rainTiming = precip > 20 ? `
                 <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-color);">
@@ -844,21 +866,19 @@
             document.getElementById('detailModal').classList.add('show');
         }
 
-        function getRainProbabilityForPeriod(hourly, dayStart, dayEnd, startHour, endHour) {
-            let totalPrecip = 0;
-            let count = 0;
+        function getMaxRainForPeriod(hourly, dayStart, dayEnd, startHour, endHour) {
+            let maxPrecip = 0;
 
             for (let i = 0; i < hourly.time.length; i++) {
                 const time = new Date(hourly.time[i]);
                 const hour = time.getHours();
                 
                 if (time >= dayStart && time <= dayEnd && hour >= startHour && hour < endHour) {
-                    totalPrecip += hourly.precipitation_probability[i] || 0;
-                    count++;
+                    maxPrecip = Math.max(maxPrecip, hourly.precipitation_probability[i] || 0);
                 }
             }
 
-            return count > 0 ? Math.round(totalPrecip / count) : 0;
+            return Math.round(maxPrecip);
         }
 
         function closeModal() {
