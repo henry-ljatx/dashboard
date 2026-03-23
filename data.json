@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-03-23T12:47:00Z",
+  "timestamp": "2026-03-23T15:56:00Z",
   "summary": {
     "today": 0.00195,
     "weekToDate": 0.00195,
@@ -25,13 +25,13 @@
   "alerts": [],
   "health": {
     "gmail": {
-      "status": "blocker",
-      "lastCheck": "2026-03-23T03:00:00Z",
-      "message": "Token expired (March 15)"
+      "status": "valid",
+      "lastCheck": "2026-03-23T15:56:00Z",
+      "message": "OAuth re-authenticated March 23, 11:49 AM"
     },
     "telegram": {
       "status": "valid",
-      "lastCheck": "2026-03-23T12:47:00Z"
+      "lastCheck": "2026-03-23T15:56:00Z"
     },
     "google": {
       "status": "blocker",
@@ -45,7 +45,7 @@
     },
     "cron": {
       "successRate": 85,
-      "lastCheck": "2026-03-23T12:47:00Z"
+      "lastCheck": "2026-03-23T15:56:00Z"
     }
   }
 }
