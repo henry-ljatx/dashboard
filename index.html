@@ -687,68 +687,81 @@
         let costData = {};
 
         /**
-         * Fetch cost data with manifest-based cache-busting
-         * Strategy: Fetch manifest.json to get current data file name,
-         * then fetch that file (which has a unique name for cache-busting)
+         * Fetch cost data with date-based filename cache-busting
+         * Strategy: Generate filename based on date (YYYYMMDD) so each day has a new file
+         * Combined with aggressive timestamp + random parameters
          */
         async function fetchCostData() {
             try {
-                // Step 1: Fetch manifest to get current data file
+                // Generate date-based filename (changes every day)
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const dateStr = `${year}${month}${day}`;
+                
+                // Generate aggressive cache-bust parameters
                 const timestamp = Date.now();
                 const random = Math.random().toString(36).substring(2, 15);
-                const manifestUrl = `manifest.json?t=${timestamp}&r=${random}`;
+                const version = '2';
                 
-                const manifestResponse = await fetch(manifestUrl, {
-                    method: 'GET',
-                    headers: {
-                        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
-                        'Pragma': 'no-cache',
-                        'Expires': '0'
-                    },
-                    cache: 'no-store'
-                });
+                // Primary: Try versioned file first (data-vN-YYYYMMDD.json)
+                const primaryUrl = `data-v${version}-${dateStr}.json?t=${timestamp}&r=${random}`;
                 
-                if (!manifestResponse.ok) throw new Error('Failed to fetch manifest');
-                const manifest = await manifestResponse.json();
-                const dataFile = manifest.dataFile || 'data.json';
-                
-                // Step 2: Fetch data file (with unique filename for cache-busting)
-                const dataUrl = `${dataFile}?t=${timestamp}&r=${random}`;
-                
-                const dataResponse = await fetch(dataUrl, {
-                    method: 'GET',
-                    headers: {
-                        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
-                        'Pragma': 'no-cache',
-                        'Expires': '0'
-                    },
-                    cache: 'no-store'
-                });
-                
-                if (!dataResponse.ok) throw new Error('Failed to fetch data');
-                costData = await dataResponse.json();
-                
-                console.log(`✅ Data loaded fresh at ${new Date().toLocaleTimeString()}`);
-                console.log(`   Manifest: v${manifest.version}, build ${manifest.buildNumber}`);
-                console.log(`   Data file: ${dataFile}`);
-                console.log(`   Data URL: ${dataUrl}`);
-                console.log(`   Status: ${dataResponse.status} ${dataResponse.statusText}`);
-                updateDashboard();
-            } catch (err) {
-                console.error('Error fetching cost data:', err);
-                // Fallback: try to fetch data.json directly
                 try {
-                    console.log('⚠️  Manifest fetch failed, falling back to data.json...');
-                    const fallbackUrl = `data.json?t=${Date.now()}&r=${Math.random()}`;
-                    const fallbackResponse = await fetch(fallbackUrl);
-                    if (fallbackResponse.ok) {
-                        costData = await fallbackResponse.json();
+                    const primaryResponse = await fetch(primaryUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+                            'Pragma': 'no-cache',
+                            'Expires': '0'
+                        },
+                        cache: 'no-store'
+                    });
+                    
+                    if (primaryResponse.ok) {
+                        costData = await primaryResponse.json();
+                        console.log(`✅ Data loaded from: ${primaryUrl}`);
+                        console.log(`   Status: ${primaryResponse.status}`);
                         updateDashboard();
                         return;
                     }
-                } catch (fallbackErr) {
-                    console.error('Fallback also failed:', fallbackErr);
+                } catch (primaryErr) {
+                    console.warn(`Primary URL failed: ${primaryUrl}`, primaryErr.message);
                 }
+                
+                // Fallback 1: Try manifest.json for current data file
+                try {
+                    console.log('Trying manifest.json...');
+                    const manifestUrl = `manifest.json?t=${timestamp}&r=${random}`;
+                    const manifestResponse = await fetch(manifestUrl, { cache: 'no-store' });
+                    if (manifestResponse.ok) {
+                        const manifest = await manifestResponse.json();
+                        const dataFile = manifest.dataFile || 'data.json';
+                        const dataUrl = `${dataFile}?t=${timestamp}&r=${random}`;
+                        const dataResponse = await fetch(dataUrl, { cache: 'no-store' });
+                        if (dataResponse.ok) {
+                            costData = await dataResponse.json();
+                            console.log(`✅ Data loaded from manifest: ${dataFile}`);
+                            updateDashboard();
+                            return;
+                        }
+                    }
+                } catch (manifestErr) {
+                    console.warn('Manifest fallback failed:', manifestErr.message);
+                }
+                
+                // Fallback 2: Direct data.json with aggressive cache-busting
+                console.log('Trying data.json with cache-busting...');
+                const fallbackUrl = `data.json?v=${version}&t=${timestamp}&r=${random}&s=${dateStr}`;
+                const fallbackResponse = await fetch(fallbackUrl, { cache: 'no-store' });
+                if (!fallbackResponse.ok) throw new Error(`HTTP ${fallbackResponse.status}`);
+                costData = await fallbackResponse.json();
+                console.log(`✅ Data loaded from: ${fallbackUrl}`);
+                updateDashboard();
+                
+            } catch (err) {
+                console.error('❌ All data fetch attempts failed:', err);
                 showAlert('Failed to load cost data. Please refresh the page.');
             }
         }
