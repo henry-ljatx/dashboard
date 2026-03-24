@@ -496,6 +496,14 @@
                 </div>
             </div>
 
+            <!-- Cost by Source (Cron vs Sub-agent vs Session) -->
+            <div class="widget">
+                <div class="widget-title">🔍 Cost by Source</div>
+                <div class="chart-container">
+                    <canvas id="sourceChart"></canvas>
+                </div>
+            </div>
+
             <!-- Cost by Service -->
             <div class="widget">
                 <div class="widget-title">📊 Cost by Service</div>
@@ -671,7 +679,7 @@
 
     <script>
         // Global state
-        let serviceChart, jobChart, trendChart, decisionVelocityChart, autonomyChart;
+        let sourceChart, serviceChart, jobChart, trendChart, decisionVelocityChart, autonomyChart;
         let providerChartDay, providerChartWeek, providerChartMonth;
         let costData = {};
 
@@ -934,6 +942,42 @@
             const serviceLabels = Object.keys(serviceData);
             const serviceValues = Object.values(serviceData);
             const colors = generateColors(serviceLabels.length);
+
+            // Source Chart (Cron vs Sub-agent vs Session)
+            const sourceData = {
+                cron: costData.sourceSummary?.cron?.[period.toLowerCase()] || 0,
+                subagent: costData.sourceSummary?.subagent?.[period.toLowerCase()] || 0,
+                session: costData.sourceSummary?.session?.[period.toLowerCase()] || 0,
+            };
+
+            const sourceValues = Object.values(sourceData);
+            const sourceLabels = ['Cron Jobs', 'Sub-agents', 'Sessions'];
+            const sourceColors = ['#10b981', '#f59e0b', '#8b5cf6'];
+
+            if (sourceChart) sourceChart.destroy();
+            const sourceCtx = document.getElementById('sourceChart').getContext('2d');
+            sourceChart = new Chart(sourceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: sourceLabels,
+                    datasets: [{
+                        data: sourceValues,
+                        backgroundColor: sourceColors,
+                        borderColor: '#1a1f26',
+                        borderWidth: 2,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#e0e0e0', padding: 15, font: { size: 12 } },
+                        },
+                    },
+                },
+            });
 
             if (serviceChart) serviceChart.destroy();
             const serviceCtx = document.getElementById('serviceChart').getContext('2d');
