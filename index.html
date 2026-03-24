@@ -169,6 +169,44 @@
             color: #666;
         }
 
+        .status-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #2a2f36;
+            gap: 8px;
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-light {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .status-badge {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        .status-badge.valid {
+            background: #10b9813d;
+            color: #10b981;
+        }
+
+        .status-badge.blocker {
+            background: #ff44443d;
+            color: #ff4444;
+        }
+
         .blocker-item {
             padding: 12px;
             background: #0f1419;
@@ -1009,32 +1047,39 @@
          */
         function updateHealthStatus() {
             const health = costData.health || {};
+            const getStatusColor = (status) => status === 'valid' ? '#10b981' : '#ff4444';
+            
             const healthHtml = `
                 <div class="status-item">
+                    <span class="status-light" style="background-color: ${getStatusColor(health.gmail?.status)}"></span>
                     <span class="status-label">Gmail OAuth</span>
                     <span class="status-badge ${health.gmail?.status === 'valid' ? 'valid' : 'blocker'}">
                         ${health.gmail?.status === 'valid' ? '✓ Valid' : '✗ Expired'}
                     </span>
                 </div>
                 <div class="status-item">
+                    <span class="status-light" style="background-color: ${getStatusColor(health.telegram?.status)}"></span>
                     <span class="status-label">Telegram Bot Token</span>
                     <span class="status-badge ${health.telegram?.status === 'valid' ? 'valid' : 'blocker'}">
                         ${health.telegram?.status === 'valid' ? '✓ Valid' : '✗ Missing'}
                     </span>
                 </div>
                 <div class="status-item">
+                    <span class="status-light" style="background-color: ${getStatusColor(health.google?.status)}"></span>
                     <span class="status-label">Google Gemini API</span>
                     <span class="status-badge ${health.google?.status === 'valid' ? 'valid' : 'blocker'}">
                         ${health.google?.status === 'valid' ? '✓ Valid' : '✗ Expired'}
                     </span>
                 </div>
                 <div class="status-item">
+                    <span class="status-light" style="background-color: ${getStatusColor(health.twilio?.status)}"></span>
                     <span class="status-label">Twilio Credentials</span>
                     <span class="status-badge ${health.twilio?.status === 'valid' ? 'valid' : 'blocker'}">
                         ${health.twilio?.status === 'valid' ? '✓ Valid' : '✗ Outdated'}
                     </span>
                 </div>
                 <div class="status-item">
+                    <span class="status-light" style="background-color: ${getStatusColor(health.cron?.successRate >= 90 ? 'valid' : 'blocker')}"></span>
                     <span class="status-label">Cron Health</span>
                     <span class="status-badge ${health.cron?.successRate >= 90 ? 'valid' : 'blocker'}">
                         ${health.cron?.successRate || '--'}% Success
