@@ -1,15 +1,15 @@
 {
   "timestamp": "2026-03-25T02:01:59.244Z",
   "summary": {
-    "today": 2.27,
-    "weekToDate": 2.68,
-    "monthToDate": 6.05,
+    "today": 12.54,
+    "weekToDate": 18.03,
+    "monthToDate": 86.99,
     "dailyBudget": 20,
     "weeklyBudget": 150,
     "monthlyBudget": 300,
-    "dailyPct": "11.3",
-    "weeklyPct": "1.8",
-    "monthlyPct": "2.0"
+    "dailyPct": "62.7",
+    "weeklyPct": "12.0",
+    "monthlyPct": "29.0"
   },
   "costs": [
     {
@@ -5439,13 +5439,8 @@
     "recommendation": "Use provider CSVs for ground truth until real-time proxy deployed"
   },
   "realtimeTracking": {
-    "lastHour": {
-      "cost": 5.88,
-      "messages": 211,
-      "period": "2026-03-25T02"
-    },
-    "totalToday": 5.88,
-    "source": "hourly-aggregation",
-    "updated": "2026-03-25T02:06:14.236Z"
+    "enabled": true,
+    "lastUpdate": "2026-03-25T02:09:16.626Z",
+    "note": "REAL costs from session messages. This replaces estimates."
   }
 }
